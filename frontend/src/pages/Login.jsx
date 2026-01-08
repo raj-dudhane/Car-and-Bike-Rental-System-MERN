@@ -1,34 +1,86 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const Login = ({ setUser }) => {
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  
+  
+  const [showPassword, setShowPassword] = useState(false);
+  
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', form);
+      const res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+      
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
       setUser(res.data.user);
-      navigate('/');
-    } catch(err) { alert("Login Failed"); }
+      
+      alert("Login Successful!");
+      navigate('/dashboard');
+    } catch (err) {
+      alert(err.response?.data?.error || "Invalid Credentials");
+    }
   };
 
   return (
-    <div className="container mt-5 d-flex justify-content-center">
-      <div className="card p-5 shadow" style={{width: '400px'}}>
-        <h2 className="text-center mb-4">Login</h2>
+    <div className="container mt-5">
+      <div className="card mx-auto shadow p-4" style={{ maxWidth: '400px' }}>
+        <h2 className="text-center mb-4">🔑 Login</h2>
+        
         <form onSubmit={handleLogin}>
-          <input className="form-control mb-3" placeholder="Email" onChange={e=>setForm({...form, email:e.target.value})} />
-          <input className="form-control mb-3" type="password" placeholder="Password" onChange={e=>setForm({...form, password:e.target.value})} />
-          <button className="btn btn-custom w-100">Login</button>
+          
+          <div className="mb-3">
+            <label className="form-label">Email Address</label>
+            <input 
+              type="email" 
+              className="form-control" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)} 
+              required 
+            />
+          </div>
+
+          <div className="mb-3">
+            <label className="form-label">Password</label>
+            <div className="input-group">
+            
+              <input 
+                type={showPassword ? "text" : "password"} 
+                className="form-control" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)} 
+                required 
+              />
+              
+          
+              <button 
+                type="button" 
+                className="btn btn-outline-secondary"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{ cursor: 'pointer' }}
+              >
+                {showPassword ? "🙈" : "👁️"}
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" className="btn btn-primary w-100 mt-3">
+            Login
+          </button>
+
         </form>
-        <p className="text-center mt-3"><Link to="/register">Create Account</Link></p>
+
+        <p className="text-center mt-3">
+          New User? <a href="/register">Create an account</a>
+        </p>
       </div>
     </div>
   );
 };
+
 export default Login;

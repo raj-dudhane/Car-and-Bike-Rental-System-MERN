@@ -3,14 +3,16 @@ const Booking = require('../models/Booking');
 // Create a new booking
 exports.createBooking = async (req, res) => {
     try {
-        const booking = await Booking.create({ ...req.body, user: req.user.id });
+        // 👇 CHANGED .id TO .userId
+        const booking = await Booking.create({ ...req.body, user: req.user.userId });
         res.status(201).json({ message: "Booking Confirmed", booking });
     } catch (err) { res.status(400).json({ error: "Booking Failed" }); }
 };
 
 // Get bookings for logged-in user
 exports.getMyBookings = async (req, res) => {
-    const bookings = await Booking.find({ user: req.user.id }).populate('vehicle');
+    // 👇 CHANGED .id TO .userId
+    const bookings = await Booking.find({ user: req.user.userId }).populate('vehicle');
     res.json(bookings);
 };
 
@@ -32,7 +34,6 @@ exports.getAllBookings = async (req, res) => {
     }
 
     try {
-        
         const bookings = await Booking.find()
             .populate('user', 'name email')   
             .populate('vehicle', 'name');     

@@ -5,7 +5,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Admin from './pages/Admin';
-import MyBookings from './pages/MyBookings';
+import Dashboard from './pages/Dashboard';      
 import './App.css';
 
 function App() {
@@ -24,9 +24,11 @@ function App() {
         <Route path="/login" element={<Login setUser={setUser} />} />
         <Route path="/register" element={<Register />} />
         <Route path="/admin" element={<Admin />} />
-        <Route path="/bookings" element={<MyBookings />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        
       </Routes>
     </BrowserRouter>
   );
 }
+
 export default App;

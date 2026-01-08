@@ -5,6 +5,7 @@ const Admin = () => {
   const [form, setForm] = useState({ name: '', type: 'car', price: '', image: '' });
   const [allBookings, setAllBookings] = useState([]); 
   const [vehicles, setVehicles] = useState([]);
+  const [users, setUsers] = useState([]); // 👈 NEW: Store users
   
   const [editingId, setEditingId] = useState(null); 
 
@@ -15,21 +16,28 @@ const Admin = () => {
   const fetchData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const resBookings = await axios.get('http://localhost:5000/api/bookings/all', {
-        headers: { Authorization: token }
-      });
+      const config = { headers: { Authorization: token } };
+
+      // 1. Get Bookings
+      const resBookings = await axios.get('http://localhost:5000/api/bookings/all', config);
       setAllBookings(resBookings.data);
 
+      // 2. Get Vehicles
       const resVehicles = await axios.get('http://localhost:5000/api/vehicles');
       setVehicles(resVehicles.data);
+
+      // 3. Get Users (NEW) 👈
+      const resUsers = await axios.get('http://localhost:5000/api/auth/users', config);
+      setUsers(resUsers.data);
+
     } catch (err) {
       console.error("Error loading data");
     }
   };
 
+  // --- VEHICLE FUNCTIONS ---
   const handleSubmit = async () => {
     const token = localStorage.getItem('token');
-    
     try {
       if (editingId) {
         await axios.put(`http://localhost:5000/api/vehicles/edit/${editingId}`, form, {
@@ -43,30 +51,11 @@ const Admin = () => {
         });
         alert("✅ Vehicle Added Successfully!");
       }
-
       setForm({ name: '', type: 'car', price: '', image: '' });
       fetchData(); 
-
     } catch (err) {
       alert("Operation failed");
     }
-  };
-
-  const handleEditClick = (vehicle) => {
-    setForm({
-        name: vehicle.name,
-        type: vehicle.type,
-        price: vehicle.price,
-        image: vehicle.image
-    });
-    setEditingId(vehicle._id); 
-    
-    window.scrollTo(0, 0); 
-  };
-
-  const cancelEdit = () => {
-    setForm({ name: '', type: 'car', price: '', image: '' });
-    setEditingId(null);
   };
 
   const deleteVehicle = async (id) => {
@@ -74,8 +63,19 @@ const Admin = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.delete(`http://localhost:5000/api/vehicles/${id}`, { headers: { Authorization: token } });
-      setVehicles(vehicles.filter(v => v._id !== id));
-    } catch (err) { alert("Error deleting"); }
+      fetchData();
+    } catch (err) { alert("Error deleting vehicle"); }
+  };
+
+  const handleEditClick = (vehicle) => {
+    setForm({ name: vehicle.name, type: vehicle.type, price: vehicle.price, image: vehicle.image });
+    setEditingId(vehicle._id); 
+    window.scrollTo(0, 0); 
+  };
+
+  const cancelEdit = () => {
+    setForm({ name: '', type: 'car', price: '', image: '' });
+    setEditingId(null);
   };
 
   const handleToggle = async (id) => {
@@ -86,14 +86,27 @@ const Admin = () => {
     } catch (err) { alert("Error updating status"); }
   };
 
+  // --- NEW: DELETE USER FUNCTION ---
+  const deleteUser = async (id) => {
+    if(!window.confirm("Are you sure you want to permanently delete this user?")) return;
+    try {
+        const token = localStorage.getItem('token');
+        await axios.delete(`http://localhost:5000/api/auth/users/${id}`, {
+            headers: { Authorization: token }
+        });
+        alert("User Deleted");
+        fetchData(); // Refresh list
+    } catch (err) {
+        alert("Failed to delete user");
+    }
+  };
+
   return (
     <div className="container mt-4">
       
+      {/* --- SECTION 1: ADD VEHICLE FORM --- */}
       <div className="card p-4 shadow mb-5 mx-auto" style={{maxWidth: '800px', borderTop: editingId ? '5px solid #ffc107' : '5px solid #198754'}}>
-        <h3 className="text-center mb-4">
-            {editingId ? "✏️ Edit Vehicle" : "➕ Add New Vehicle"}
-        </h3>
-        
+        <h3 className="text-center mb-4">{editingId ? "✏️ Edit Vehicle" : "➕ Add New Vehicle"}</h3>
         <div className="row">
           <div className="col-md-6 mb-3">
             <label>Vehicle Name</label>
@@ -107,7 +120,7 @@ const Admin = () => {
             </select>
           </div>
           <div className="col-md-6 mb-3">
-            <label>Price per Day ($)</label>
+            <label>Price ($)</label>
             <input type="number" className="form-control" value={form.price} onChange={e=>setForm({...form, price:e.target.value})} />
           </div>
           <div className="col-md-6 mb-3">
@@ -115,29 +128,58 @@ const Admin = () => {
             <input className="form-control" value={form.image} onChange={e=>setForm({...form, image:e.target.value})} />
           </div>
         </div>
-
         <div className="d-flex gap-2">
             <button className={`btn w-100 ${editingId ? 'btn-warning' : 'btn-success'}`} onClick={handleSubmit}>
                 {editingId ? "Update Vehicle" : "Add to Fleet"}
             </button>
-            
-            {editingId && (
-                <button className="btn btn-secondary" onClick={cancelEdit}>Cancel</button>
-            )}
+            {editingId && <button className="btn btn-secondary" onClick={cancelEdit}>Cancel</button>}
         </div>
       </div>
 
+      {/* --- SECTION 2: USERS LIST (NEW) --- */}
+      <h3 className="text-center mb-3">👥 Manage Users</h3>
+      <div className="table-responsive shadow rounded mb-5">
+        <table className="table table-bordered mb-0 bg-white align-middle">
+            <thead className="table-primary">
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {users.map(u => (
+                    <tr key={u._id}>
+                        <td className="fw-bold">{u.name}</td>
+                        <td>{u.email}</td>
+                        <td>
+                            <span className={`badge ${u.role === 'admin' ? 'bg-warning text-dark' : 'bg-secondary'}`}>
+                                {u.role}
+                            </span>
+                        </td>
+                        <td>
+                            {/* Don't let admin delete themselves */}
+                            <button 
+                                className="btn btn-sm btn-danger" 
+                                onClick={() => deleteUser(u._id)}
+                                disabled={u.role === 'admin'} 
+                            >
+                                Delete User
+                            </button>
+                        </td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+      </div>
+
+      {/* --- SECTION 3: VEHICLE FLEET --- */}
       <h3 className="text-center mb-3">🚗 Manage Fleet</h3>
       <div className="table-responsive shadow rounded mb-5">
         <table className="table table-bordered mb-0 bg-white text-center align-middle">
           <thead className="table-secondary">
-            <tr>
-              <th>Image</th>
-              <th>Details</th>
-              <th>Price</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
+            <tr><th>Image</th><th>Details</th><th>Price</th><th>Status</th><th>Actions</th></tr>
           </thead>
           <tbody>
             {vehicles.map(v => (
@@ -145,27 +187,11 @@ const Admin = () => {
                 <td><img src={v.image} alt={v.name} style={{width:'80px', height:'50px', objectFit:'cover', borderRadius:'5px'}} /></td>
                 <td className="fw-bold text-start ps-4">{v.name} <br/> <small className="text-muted text-uppercase">{v.type}</small></td>
                 <td className="text-success fw-bold">${v.price}</td>
+                <td><span className={`badge ${v.available ? 'bg-success' : 'bg-danger'}`}>{v.available ? "Active" : "Disabled"}</span></td>
                 <td>
-                  <span className={`badge ${v.available ? 'bg-success' : 'bg-danger'}`}>
-                    {v.available ? "Active" : "Disabled"}
-                  </span>
-                </td>
-                <td>
-                  {/* BUTTON CHANGED HERE */}
-                  <button className="btn btn-sm btn-primary me-2" onClick={() => handleEditClick(v)}>
-                    Update Vehicle
-                  </button>
-
-                  <button 
-                    className={`btn btn-sm me-2 ${v.available ? 'btn-warning' : 'btn-info'}`}
-                    onClick={() => handleToggle(v._id)}
-                  >
-                    {v.available ? "Disable" : "Enable"}
-                  </button>
-
-                  <button className="btn btn-sm btn-danger" onClick={() => deleteVehicle(v._id)}>
-                    Delete
-                  </button>
+                  <button className="btn btn-sm btn-primary me-2" onClick={() => handleEditClick(v)}>Edit</button>
+                  <button className={`btn btn-sm me-2 ${v.available ? 'btn-warning' : 'btn-info'}`} onClick={() => handleToggle(v._id)}>{v.available ? "Disable" : "Enable"}</button>
+                  <button className="btn btn-sm btn-danger" onClick={() => deleteVehicle(v._id)}>Delete</button>
                 </td>
               </tr>
             ))}
@@ -173,12 +199,11 @@ const Admin = () => {
         </table>
       </div>
 
+      {/* --- SECTION 4: BOOKINGS --- */}
       <h3 className="text-center mb-3">🗂️ Booking Log</h3>
       <div className="table-responsive shadow rounded">
         <table className="table table-bordered mb-0 bg-white">
-          <thead className="table-dark">
-            <tr><th>ID</th><th>User</th><th>Vehicle</th><th>Dates</th><th>Price</th></tr>
-          </thead>
+          <thead className="table-dark"><tr><th>ID</th><th>User</th><th>Vehicle</th><th>Dates</th><th>Price</th></tr></thead>
           <tbody>
             {allBookings.map((b) => (
               <tr key={b._id}>
