@@ -34,3 +34,24 @@ exports.toggleAvailability = async (req, res) => {
         res.status(500).json({ error: "Server Error" });
     }
 };
+
+
+
+exports.updateVehicle = async (req, res) => {
+    
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: "Access Denied" });
+    }
+
+    try {
+    
+        const updatedVehicle = await Vehicle.findByIdAndUpdate(
+            req.params.id,
+            req.body, 
+            { new: true } 
+        );
+        res.json(updatedVehicle);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to update vehicle" });
+    }
+};
