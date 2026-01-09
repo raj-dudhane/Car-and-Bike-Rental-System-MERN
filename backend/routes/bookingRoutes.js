@@ -8,4 +8,5 @@ router.get('/my', protect, getMyBookings);
 router.delete('/:id', protect, deleteBooking);
 router.get('/all', protect, getAllBookings);
 
+
 module.exports = router;

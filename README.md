@@ -1,10 +1,10 @@
-# 🚗 RentalPro - Vehicle Rental System
+#  RentalPro - Vehicle Rental System
 
 A full-stack **Vehicle Rental Platform** built using the **MERN Stack** (MongoDB, Express, React, Node.js). This application allows users to browse vehicles, book them for specific dates, and manage their history. Administrators can manage the fleet, toggle availability, and view all bookings.
 
 ---
 
-## 🚀 Features
+##  Features
 
 ### 👤 User Features
 * **Authentication:** Secure Login & Signup (JWT-based).
@@ -13,7 +13,7 @@ A full-stack **Vehicle Rental Platform** built using the **MERN Stack** (MongoDB
 * **My History:** View past bookings and delete history.
 * **Responsive UI:** Clean and modern interface built with Bootstrap.
 
-### 🛡️ Admin Features
+###  Admin Features
 * **Dashboard:** Secured admin panel (Role-based access).
 * **Fleet Management:** Add new vehicles (Cars/Bikes) with images and prices.
 * **Availability Control:** Mark vehicles as "Available" or "Unavailable" (Maintenance mode).

@@ -5,14 +5,13 @@ const connectDB = require('./config/db');
 
 const app = express();
 
-// Connect to Database
 connectDB();
 
-// Global Middleware
+
 app.use(express.json());
 app.use(cors());
 
-// Load Routes
+
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/vehicles', require('./routes/vehicleRoutes'));
 app.use('/api/bookings', require('./routes/bookingRoutes'));

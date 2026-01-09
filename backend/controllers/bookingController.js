@@ -1,22 +1,38 @@
 const Booking = require('../models/Booking');
 
-// Create a new booking
 exports.createBooking = async (req, res) => {
     try {
-        // 👇 CHANGED .id TO .userId
-        const booking = await Booking.create({ ...req.body, user: req.user.userId });
+        const userId = req.user ? (req.user.userId || req.user.id || req.user._id) : null;
+
+        if (!userId) {
+            return res.status(401).json({ error: "User not authenticated. Please Log in again." });
+        }
+
+        const booking = await Booking.create({ 
+            ...req.body, 
+            user: userId 
+        });
+
         res.status(201).json({ message: "Booking Confirmed", booking });
-    } catch (err) { res.status(400).json({ error: "Booking Failed" }); }
+
+    } catch (err) { 
+        console.error(err.message); 
+        res.status(400).json({ error: err.message || "Booking Failed" }); 
+    }
 };
 
-// Get bookings for logged-in user
 exports.getMyBookings = async (req, res) => {
-    // 👇 CHANGED .id TO .userId
-    const bookings = await Booking.find({ user: req.user.userId }).populate('vehicle');
-    res.json(bookings);
+    try {
+        const userId = req.user ? (req.user.userId || req.user.id || req.user._id) : null;
+        if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+        const bookings = await Booking.find({ user: userId }).populate('vehicle');
+        res.json(bookings);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch bookings" });
+    }
 };
 
-// Delete a booking by ID
 exports.deleteBooking = async (req, res) => {
     try {
         await Booking.findByIdAndDelete(req.params.id);
@@ -26,10 +42,8 @@ exports.deleteBooking = async (req, res) => {
     }
 };
 
-//  Get all bookings with user & vehicle details
 exports.getAllBookings = async (req, res) => {
-    
-    if (req.user.role !== 'admin') {
+    if (!req.user || req.user.role !== 'admin') {
         return res.status(403).json({ error: "Access Denied: Admins Only" });
     }
 

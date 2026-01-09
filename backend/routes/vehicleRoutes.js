@@ -1,9 +1,19 @@
 const express = require('express');
-const { getVehicles, addVehicle,toggleAvailability ,updateVehicle} = require('../controllers/vehicleController');
+const { 
+    addVehicle, 
+    getVehicles, 
+    deleteVehicle, 
+    editVehicle, 
+    toggleAvailability 
+} = require('../controllers/vehicleController');
+
 const protect = require('../middleware/authMiddleware');
 const router = express.Router();
+
 router.get('/', getVehicles);
 router.post('/', protect, addVehicle);
-router.put('/:id', protect, toggleAvailability);
-router.put('/edit/:id', protect, updateVehicle);
+router.delete('/:id', protect, deleteVehicle);
+router.put('/edit/:id', protect, editVehicle);
+router.put('/status/:id', protect, toggleAvailability);
+
 module.exports = router;
